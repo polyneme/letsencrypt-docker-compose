@@ -153,15 +153,20 @@ services:
 ### <a id="b56e2fee036d09a35898559d9889bae7"></a>Step 3 - Create named Docker volumes for dummy and Let's Encrypt TLS certificates
 
 ```bash
-docker volume create --name=nginx_conf
-docker volume create --name=letsencrypt_certs
+source .env
+docker volume create --name=${COMPOSE_PROJECT_NAME}_nginx_conf
+docker volume create --name=${COMPOSE_PROJECT_NAME}_letsencrypt_certs
+docker volume create --name=${COMPOSE_PROJECT_NAME}_mongo_data
+docker volume create --name=${COMPOSE_PROJECT_NAME}_dagster_postgres_data
 ```
 
 ### <a id="4952d0670f6fb00a0337d2251621508a"></a>Step 4 - Build images and start containers using staging Let's Encrypt server
 
 ```bash
-docker compose up -d --build
-docker compose logs -f
+# if you want to set a new password for 'demouser':
+# htpasswd -c nginx/.htpasswd demouser
+docker-compose up -d --build
+docker-compose logs -f
 ```
 
 You can alternatively use the `docker-compose` binary.
@@ -187,7 +192,7 @@ Certificates issued by `(STAGING) Let's Encrypt` are considered not secure by br
 Stop the containers:
 
 ```bash
-docker compose down
+docker-compose down
 ```
 
 Configure to use production Let's Encrypt server in [`config.env`](config.env):
@@ -199,15 +204,16 @@ CERTBOT_TEST_CERT=0
 Re-create the volume for Let's Encrypt certificates:
 
 ```bash
-docker volume rm letsencrypt_certs
-docker volume create --name=letsencrypt_certs
+docker volume rm ${COMPOSE_PROJECT_NAME}_letsencrypt_certs
+docker volume create --name=${COMPOSE_PROJECT_NAME}_letsencrypt_certs
 ```
 
 Start the containers:
 
 ```bash
-docker compose up -d
-docker compose logs -f
+docker-compose up -d
+docker-compose logs -f certbot
+docker-compose logs -f nginx
 ```
 
 ### <a id="70d8ba04ba9117ff3ba72a9413131351"></a>Step 7 - verify HTTPS works with the production certificates
